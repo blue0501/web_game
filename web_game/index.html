@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新天骄：英雄崛起</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-ui">
+            <div id="character-info" class="ui-panel">
+                <h3>角色信息</h3>
+                <div id="character-stats"></div>
+            </div>
+            <div id="quest-log" class="ui-panel">
+                <h3>任务日志</h3>
+                <div id="quest-list"></div>
+            </div>
+        </div>
+        <canvas id="game-canvas"></canvas>
+        <div id="combat-screen" class="hidden">
+            <div id="player-combat"></div>
+            <div id="combat-log"></div>
+            <div id="enemy-combat"></div>
+            <div id="combat-actions"></div>
+        </div>
+        <div id="inventory-screen" class="ui-panel hidden">
+            <h3>装备与物品</h3>
+            <div id="inventory-slots"></div>
+            <div id="equipment-slots"></div>
+        </div>
+        <div id="skill-tree-screen" class="ui-panel hidden">
+            <h3>技能树</h3>
+            <div id="skill-tree"></div>
+        </div>
+    </div>
+
+    <!-- 数据脚本 -->
+    <script src="js/storage.js"></script>
+    
+    <!-- 核心游戏脚本 -->
+    <script src="js/character.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/quest.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/equipment.js"></script>
+    <script src="js/skill.js"></script>
+    <script src="js/ui.js"></script>
+    
+    <!-- 主游戏脚本 -->
+    <script src="js/main.js"></script>
+
+    <!-- 在</body>标签前添加以下调试按钮 -->
+    <div style="position: fixed; bottom: 10px; left: 10px; z-index: 1000;">
+        <button onclick="debugReset()" style="background: red; color: white;">重置游戏</button>
+    </div>
+
+    <script>
+    function debugReset() {
+        // 清除所有本地存储并重新加载页面
+        localStorage.clear();
+        location.reload();
+    }
+    </script>
+</body>
+</html>
