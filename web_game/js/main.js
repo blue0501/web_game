@@ -60,11 +60,8 @@ class Game {
         this.questSystem = new QuestSystem(this);
         this.combatSystem = new CombatSystem(this);
         
-        // 确保新玩家获得初始装备和技能
-        this.equipmentSystem.addItem("wooden_sword");
-        if (!this.character.skills.some(s => s.id === "basic_slash")) {
-            this.character.skills.push(this.skillSystem.getSkillById("basic_slash"));
-        }
+        // 为新玩家添加初始装备和技能
+        this.giveNewPlayerStarterItems();
         
         // 最后初始化UI组件 - 这样其他组件都已准备就绪
         this.ui = new UI(this);
@@ -78,6 +75,17 @@ class Game {
         console.log("游戏初始化完成，当前状态:", this.currentState);
     }
     
+    // 为新玩家提供初始物品和技能的方法
+    giveNewPlayerStarterItems() {
+        // 添加初始装备
+        this.equipmentSystem.addItem("wooden_sword");
+        
+        // 添加初始技能（如果尚未拥有）
+        if (!this.character.skills.some(s => s.id === "basic_slash")) {
+            this.character.skills.push(this.skillSystem.getSkillById("basic_slash"));
+        }
+    }
+    
     loadGameData() {
         // 尝试从本地存储加载游戏数据
         const savedData = Storage.loadGame();
@@ -86,9 +94,8 @@ class Game {
             this.character = Character.fromSaveData(savedData.character);
             console.log("游戏数据加载成功");
         } else {
-            // 如果没有存档，给新玩家一些基础装备
-            this.equipmentSystem.addItem("wooden_sword");
-            this.character.skills.push(this.skillSystem.getSkillById("basic_slash"));
+            // 如果没有存档，给新玩家初始物品
+            this.giveNewPlayerStarterItems();
             console.log("创建了新的游戏存档");
         }
     }
