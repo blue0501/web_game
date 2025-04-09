@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简易贪吃蛇</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="score-board">
+            <div class="score">分数: <span id="score">0</span></div>
+            <div class="high-score">最高分: <span id="highScore">0</span></div>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="controls">
+            <button id="startBtn">开始游戏</button>
+            <button id="pauseBtn">暂停</button>
+        </div>
+
+        <div class="mobile-controls">
+            <button id="upBtn">↑</button>
+            <div class="horizontal-controls">
+                <button id="leftBtn">←</button>
+                <button id="rightBtn">→</button>
+            </div>
+            <button id="downBtn">↓</button>
+        </div>
+        
+        <div class="game-over-screen" id="gameOverScreen">
+            <div class="game-over-content">
+                <h2>游戏结束!</h2>
+                <p>你的得分: <span id="finalScore">0</span></p>
+                <button id="restartBtn">再玩一次</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/game.js"></script>
+</body>
+</html>
