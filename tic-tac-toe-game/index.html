@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>井字棋游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #game-container {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            margin: 20px auto;
+            width: 310px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: white;
+            border: 2px solid #333;
+            font-size: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .cell:hover {
+            background-color: #f5f5f5;
+        }
+        #status {
+            font-size: 24px;
+            margin: 20px 0;
+            height: 30px;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        .x {
+            color: #e74c3c;
+        }
+        .o {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <h1>井字棋游戏</h1>
+    <div id="status">轮到玩家 X</div>
+    <div id="game-container"></div>
+    <button id="reset-btn">重新开始</button>
+
+    <script>
+        // 游戏变量
+        const gameContainer = document.getElementById('game-container');
+        const statusElement = document.getElementById('status');
+        const resetButton = document.getElementById('reset-btn');
+        
+        let currentPlayer = 'X'; // 当前玩家
+        let gameBoard = ['', '', '', '', '', '', '', '', '']; // 游戏板状态
+        let gameActive = true; // 游戏状态
+        
+        // 胜利条件 - 所有可能的获胜组合
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // 横向
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // 纵向
+            [0, 4, 8], [2, 4, 6]             // 对角线
+        ];
+        
+        // 初始化游戏
+        function initGame() {
+            // 创建9个单元格
+            gameContainer.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => handleCellClick(i));
+                gameContainer.appendChild(cell);
+            }
+            
+            // 重置游戏状态
+            gameBoard = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            statusElement.textContent = `轮到玩家 ${currentPlayer}`;
+            statusElement.className = '';
+        }
+        
+        // 处理单元格点击
+        function handleCellClick(index) {
+            // 如果单元格已填充或游戏结束，则忽略点击
+            if (gameBoard[index] !== '' || !gameActive) {
+                return;
+            }
+            
+            // 更新游戏板
+            gameBoard[index] = currentPlayer;
+            
+            // 更新UI
+            const cell = document.querySelector(`[data-index="${index}"]`);
+            cell.textContent = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+            
+            // 检查是否游戏结束
+            checkGameResult();
+        }
+        
+        // 检查游戏结果
+        function checkGameResult() {
+            let roundWon = false;
+            
+            // 检查是否有玩家赢了
+            for (let i = 0; i < winConditions.length; i++) {
+                const [a, b, c] = winConditions[i];
+                if (gameBoard[a] === '' || gameBoard[b] === '' || gameBoard[c] === '') {
+                    continue;
+                }
+                if (gameBoard[a] === gameBoard[b] && gameBoard[b] === gameBoard[c]) {
+                    roundWon = true;
+                    break;
+                }
+            }
+            
+            if (roundWon) {
+                // 有玩家赢了
+                statusElement.textContent = `玩家 ${currentPlayer} 获胜！`;
+                statusElement.className = currentPlayer.toLowerCase();
+                gameActive = false;
+                return;
+            }
+            
+            // 检查是否平局
+            if (!gameBoard.includes('')) {
+                statusElement.textContent = '游戏平局！';
+                gameActive = false;
+                return;
+            }
+            
+            // 切换玩家
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            statusElement.textContent = `轮到玩家 ${currentPlayer}`;
+            statusElement.className = currentPlayer.toLowerCase();
+        }
+        
+        // 重置游戏
+        resetButton.addEventListener('click', initGame);
+        
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
