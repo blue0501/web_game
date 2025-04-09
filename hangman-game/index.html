@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猜单词游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .word-display {
+            margin: 20px 0;
+            font-size: 40px;
+            letter-spacing: 10px;
+            font-family: monospace;
+        }
+        .hangman-drawing {
+            margin: 20px auto;
+            width: 200px;
+            height: 200px;
+            position: relative;
+        }
+        .letter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .letter-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            border-radius: 5px;
+            background-color: #e0e0e0;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .letter-btn:hover {
+            background-color: #d0d0d0;
+        }
+        .letter-btn.guessed {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+        .letter-btn.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .letter-btn.incorrect {
+            background-color: #F44336;
+            color: white;
+        }
+        .hint {
+            font-size: 18px;
+            color: #666;
+            margin: 15px 0;
+        }
+        .status {
+            font-size: 20px;
+            margin: 15px 0;
+            height: 25px;
+        }
+        .guesses-left {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #e74c3c;
+        }
+        .result-container {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            display: none;
+        }
+        .result-container.win {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .result-container.lose {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .categories {
+            margin: 15px 0;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        /* 绘制吊人 */
+        .hangman-part {
+            position: absolute;
+            background-color: #333;
+        }
+        .gallows {
+            width: 120px;
+            height: 5px;
+            top: 15px;
+            left: 40px;
+        }
+        .support {
+            width: 5px;
+            height: 175px;
+            top: 15px;
+            left: 40px;
+        }
+        .base {
+            width: 80px;
+            height: 5px;
+            top: 190px;
+            left: 10px;
+        }
+        .top {
+            width: 5px;
+            height: 20px;
+            top: 15px;
+            left: 155px;
+        }
+        .head {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            top: 35px;
+            left: 142px;
+            background-color: transparent;
+            border: 5px solid #333;
+        }
+        .body {
+            width: 5px;
+            height: 70px;
+            top: 70px;
+            left: 155px;
+        }
+        .left-arm {
+            width: 40px;
+            height: 5px;
+            top: 85px;
+            left: 115px;
+            transform: rotate(30deg);
+        }
+        .right-arm {
+            width: 40px;
+            height: 5px;
+            top: 85px;
+            left: 155px;
+            transform: rotate(-30deg);
+        }
+        .left-leg {
+            width: 40px;
+            height: 5px;
+            top: 140px;
+            left: 120px;
+            transform: rotate(30deg);
+        }
+        .right-leg {
+            width: 40px;
+            height: 5px;
+            top: 140px;
+            left: 155px;
+            transform: rotate(-30deg);
+        }
+    </style>
+</head>
+<body>
+    <h1>猜单词游戏</h1>
+    <div class="game-container">
+        <div class="categories">
+            <button id="category-animals">动物</button>
+            <button id="category-fruits">水果</button>
+            <button id="category-colors">颜色</button>
+            <button id="category-countries">国家</button>
+        </div>
+        
+        <div class="hangman-drawing">
+            <div class="hangman-part base hidden"></div>
+            <div class="hangman-part support hidden"></div>
+            <div class="hangman-part gallows hidden"></div>
+            <div class="hangman-part top hidden"></div>
+            <div class="hangman-part head hidden"></div>
+            <div class="hangman-part body hidden"></div>
+            <div class="hangman-part left-arm hidden"></div>
+            <div class="hangman-part right-arm hidden"></div>
+            <div class="hangman-part left-leg hidden"></div>
+            <div class="hangman-part right-leg hidden"></div>
+        </div>
+        
+        <div class="guesses-left">剩余猜测次数: <span id="guesses-left">6</span></div>
+        
+        <div id="word-display" class="word-display">_ _ _ _ _</div>
+        
+        <div id="hint" class="hint"></div>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="letter-buttons" id="letter-buttons"></div>
+        
+        <div id="result-win" class="result-container win">
+            恭喜！你猜出了单词！
+            <div class="answer">答案: <span id="answer-win"></span></div>
+            <button id="play-again-win">再玩一次</button>
+        </div>
+        
+        <div id="result-lose" class="result-container lose">
+            游戏结束！没有猜出单词。
+            <div class="answer">答案: <span id="answer-lose"></span></div>
+            <button id="play-again-lose">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        // 单词类别及提示
+        const wordCategories = {
+            animals: {
+                title: "动物",
+                words: [
+                    { word: "CAT", hint: "一种常见的宠物，会喵喵叫" },
+                    { word: "DOG", hint: "人类最好的朋友" },
+                    { word: "ELEPHANT", hint: "最大的陆地动物之一" },
+                    { word: "TIGER", hint: "有条纹的大型猫科动物" },
+                    { word: "MONKEY", hint: "爱爬树的动物" },
+                    { word: "RABBIT", hint: "有长耳朵，喜欢吃胡萝卜" },
+                    { word: "PANDA", hint: "中国的国宝" }
+                ]
+            },
+            fruits: {
+                title: "水果",
+                words: [
+                    { word: "APPLE", hint: "一天一个，医生远离我" },
+                    { word: "BANANA", hint: "猴子最爱的黄色水果" },
+                    { word: "ORANGE", hint: "富含维生素C的柑橘类水果" },
+                    { word: "GRAPE", hint: "可以用来酿酒的小型水果" },
+                    { word: "WATERMELON", hint: "夏天最受欢迎的大型水果" },
+                    { word: "STRAWBERRY", hint: "红色的小型浆果" }
+                ]
+            },
+            colors: {
+                title: "颜色",
+                words: [
+                    { word: "BLUE", hint: "天空和海洋的颜色" },
+                    { word: "GREEN", hint: "草地的颜色" },
+                    { word: "YELLOW", hint: "太阳的颜色" },
+                    { word: "PURPLE", hint: "葡萄的颜色" },
+                    { word: "ORANGE", hint: "橙子的颜色" },
+                    { word: "WHITE", hint: "雪的颜色" }
+                ]
+            },
+            countries: {
+                title: "国家",
+                words: [
+                    { word: "CHINA", hint: "亚洲最大的国家之一" },
+                    { word: "AMERICA", hint: "自由女神像所在的国家" },
+                    { word: "JAPAN", hint: "樱花盛开的国家" },
+                    { word: "BRAZIL", hint: "足球王国" },
+                    { word: "FRANCE", hint: "埃菲尔铁塔所在的国家" },
+                    { word: "AUSTRALIA", hint: "袋鼠的家园" }
+                ]
+            }
+        };
+        
+        // 获取DOM元素
+        const wordDisplayElement = document.getElementById('word-display');
+        const hintElement = document.getElementById('hint');
+        const statusElement = document.getElementById('status');
+        const guessesLeftElement = document.getElementById('guesses-left');
+        const letterButtonsElement = document.getElementById('letter-buttons');
+        const resultWinElement = document.getElementById('result-win');
+        const resultLoseElement = document.getElementById('result-lose');
+        const answerWinElement = document.getElementById('answer-win');
+        const answerLoseElement = document.getElementById('answer-lose');
+        const playAgainWinButton = document.getElementById('play-again-win');
+        const playAgainLoseButton = document.getElementById('play-again-lose');
+        const hangmanParts = document.querySelectorAll('.hangman-part');
+        
+        // 类别按钮
+        const categoryAnimalsButton = document.getElementById('category-animals');
+        const categoryFruitsButton = document.getElementById('category-fruits');
+        const categoryColorsButton = document.getElementById('category-colors');
+        const categoryCountriesButton = document.getElementById('category-countries');
+        
+        // 游戏变量
+        let currentWord = "";
+        let currentHint = "";
+        let displayWord = [];
+        let guessedLetters = [];
+        let wrongGuesses = 0;
+        let maxWrongGuesses = 6;
+        let gameEnded = false;
+        
+        // 初始化游戏
+        function initGame(category) {
+            // 重置游戏状态
+            currentWord = "";
+            displayWord = [];
+            guessedLetters = [];
+            wrongGuesses = 0;
+            gameEnded = false;
+            
+            // 隐藏结果
+            resultWinElement.style.display = 'none';
+            resultLoseElement.style.display = 'none';
+            
+            // 隐藏所有吊人部分
+            hangmanParts.forEach(part => {
+                part.classList.add('hidden');
+            });
+            
+            // 更新剩余猜测次数
+            guessesLeftElement.textContent = maxWrongGuesses;
+            
+            // 清空状态信息
+            statusElement.textContent = '';
+            
+            // 选择单词
+            selectRandomWord(category);
+            
+            // 生成字母按钮
+            generateLetterButtons();
+        }
+        
+        // 选择随机单词
+        function selectRandomWord(category) {
+            const categoryData = wordCategories[category];
+            const randomIndex = Math.floor(Math.random() * categoryData.words.length);
+            const wordData = categoryData.words[randomIndex];
+            
+            currentWord = wordData.word;
+            currentHint = wordData.hint;
+            
+            // 设置显示单词（用下划线代替字母）
+            displayWord = currentWord.split('').map(() => "_");
+            
+            // 更新显示
+            updateWordDisplay();
+            
+            // 显示提示
+            hintElement.textContent = `提示: ${currentHint}`;
+        }
+        
+        // 生成字母按钮
+        function generateLetterButtons() {
+            letterButtonsElement.innerHTML = '';
+            
+            for (let i = 65; i <= 90; i++) {
+                const letter = String.fromCharCode(i);
+                const button = document.createElement('button');
+                button.className = 'letter-btn';
+                button.textContent = letter;
+                button.addEventListener('click', () => guessLetter(letter));
+                letterButtonsElement.appendChild(button);
+            }
+        }
+        
+        // 更新单词显示
+        function updateWordDisplay() {
+            wordDisplayElement.textContent = displayWord.join(' ');
+        }
+        
+        // 猜字母
+        function guessLetter(letter) {
+            if (gameEnded || guessedLetters.includes(letter)) {
+                return;
+            }
+            
+            guessedLetters.push(letter);
+            
+            // 找到字母按钮并标记为已猜
+            const letterButton = document.querySelector(`.letter-btn:nth-child(${letter.charCodeAt(0) - 64})`);
+            letterButton.classList.add('guessed');
+            
+            // 检查字母是否在单词中
+            if (currentWord.includes(letter)) {
+                // 字母正确
+                letterButton.classList.add('correct');
+                
+                // 更新显示单词
+                for (let i = 0; i < currentWord.length; i++) {
+                    if (currentWord[i] === letter) {
+                        displayWord[i] = letter;
+                    }
+                }
+                
+                updateWordDisplay();
+                
+                // 检查是否赢了
+                if (!displayWord.includes('_')) {
+                    gameWon();
+                }
+                
+                statusElement.textContent = `字母 ${letter} 正确!`;
+            } else {
+                // 字母错误
+                letterButton.classList.add('incorrect');
+                wrongGuesses++;
+                
+                // 更新吊人图
+                updateHangman();
+                
+                // 更新剩余猜测次数
+                guessesLeftElement.textContent = maxWrongGuesses - wrongGuesses;
+                
+                statusElement.textContent = `字母 ${letter} 错误!`;
+                
+                // 检查是否输了
+                if (wrongGuesses >= maxWrongGuesses) {
+                    gameLost();
+                }
+            }
+        }
+        
+        // 更新吊人图
+        function updateHangman() {
+            if (wrongGuesses <= hangmanParts.length) {
+                // 从底座开始显示各部分
+                hangmanParts[wrongGuesses - 1].classList.remove('hidden');
+            }
+        }
+        
+        // 游戏胜利
+        function gameWon() {
+            gameEnded = true;
+            resultWinElement.style.display = 'block';
+            answerWinElement.textContent = currentWord;
+            statusElement.textContent = '恭喜，你赢了！';
+        }
+        
+        // 游戏失败
+        function gameLost() {
+            gameEnded = true;
+            resultLoseElement.style.display = 'block';
+            answerLoseElement.textContent = currentWord;
+            statusElement.textContent = '游戏结束，你输了！';
+        }
+        
+        // 事件监听
+        categoryAnimalsButton.addEventListener('click', () => initGame('animals'));
+        categoryFruitsButton.addEventListener('click', () => initGame('fruits'));
+        categoryColorsButton.addEventListener('click', () => initGame('colors'));
+        categoryCountriesButton.addEventListener('click', () => initGame('countries'));
+        playAgainWinButton.addEventListener('click', () => initGame(getCurrentCategory()));
+        playAgainLoseButton.addEventListener('click', () => initGame(getCurrentCategory()));
+        
+        // 获取当前类别
+        function getCurrentCategory() {
+            // 默认为动物类别
+            return 'animals';
+        }
+        
+        // 初始化键盘事件
+        function initKeyboardEvents() {
+            document.addEventListener('keydown', (e) => {
+                // 检查是否是字母键
+                const keyCode = e.keyCode;
+                if (keyCode >= 65 && keyCode <= 90) {
+                    const letter = String.fromCharCode(keyCode);
+                    guessLetter(letter);
+                }
+            });
+        }
+        
+        // 初始化游戏
+        initGame('animals');
+        initKeyboardEvents();
+    </script>
+</body>
+</html>
