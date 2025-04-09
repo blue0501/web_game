@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单问答游戏</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .quiz-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .question {
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .option {
+            padding: 10px 15px;
+            text-align: left;
+            background-color: #e9e9e9;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .option:hover {
+            background-color: #d9d9d9;
+        }
+        .option.selected {
+            background-color: #4285f4;
+            color: white;
+            border-color: #3367d6;
+        }
+        .option.correct {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #388E3C;
+        }
+        .option.incorrect {
+            background-color: #F44336;
+            color: white;
+            border-color: #D32F2F;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .score-container {
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        .feedback {
+            margin: 15px 0;
+            font-size: 18px;
+            min-height: 25px;
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result-container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 10px 0 20px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #4285f4;
+            width: 0;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>简单问答游戏</h1>
+    <div class="quiz-container">
+        <div class="score-container">
+            <span>得分: <span id="score">0</span> / <span id="total-questions">0</span></span>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div id="question-container" class="question-container">
+            <div id="question" class="question"></div>
+            <div id="options" class="options"></div>
+            <div id="feedback" class="feedback"></div>
+        </div>
+        
+        <div id="result-container" class="result-container hidden">
+            <h2>测验结束!</h2>
+            <p>你的最终得分: <span id="final-score">0</span> / <span id="final-total">0</span></p>
+            <p>正确率: <span id="percentage">0</span>%</p>
+        </div>
+        
+        <div class="controls">
+            <button id="next-btn" disabled>下一题</button>
+            <button id="restart-btn" class="hidden">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const questionContainer = document.getElementById('question-container');
+        const resultContainer = document.getElementById('result-container');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const feedbackElement = document.getElementById('feedback');
+        const scoreElement = document.getElementById('score');
+        const totalQuestionsElement = document.getElementById('total-questions');
+        const finalScoreElement = document.getElementById('final-score');
+        const finalTotalElement = document.getElementById('final-total');
+        const percentageElement = document.getElementById('percentage');
+        const nextButton = document.getElementById('next-btn');
+        const restartButton = document.getElementById('restart-btn');
+        const progressElement = document.getElementById('progress');
+        
+        // 问题数据
+        const questions = [
+            {
+                question: "HTML是什么的缩写?",
+                options: [
+                    "超文本标记语言 (Hyper Text Markup Language)",
+                    "高科技多媒体链接 (High Tech Multi Language)",
+                    "家庭工具标记语言 (Home Tool Markup Language)",
+                    "超链接和文本标记语言 (Hyper Text and Markup Links)"
+                ],
+                correctIndex: 0
+            },
+            {
+                question: "在JavaScript中，以下哪个是正确的变量声明方式?",
+                options: [
+                    "var myVar = 5;",
+                    "variable myVar = 5;",
+                    "v myVar = 5;",
+                    "int myVar = 5;"
+                ],
+                correctIndex: 0
+            },
+            {
+                question: "CSS是什么的缩写?",
+                options: [
+                    "计算机样式表 (Computer Style Sheets)",
+                    "创意样式表 (Creative Style Sheets)",
+                    "层叠样式表 (Cascading Style Sheets)",
+                    "彩色样式表 (Colorful Style Sheets)"
+                ],
+                correctIndex: 2
+            },
+            {
+                question: "以下哪个HTML标签用于创建一个段落?",
+                options: [
+                    "<paragraph>",
+                    "<p>",
+                    "<para>",
+                    "<text>"
+                ],
+                correctIndex: 1
+            },
+            {
+                question: "JavaScript是一种什么类型的编程语言?",
+                options: [
+                    "编译型语言",
+                    "解释型语言",
+                    "低级语言",
+                    "标记语言"
+                ],
+                correctIndex: 1
+            },
+            {
+                question: "以下哪个不是有效的CSS选择器?",
+                options: [
+                    ".class",
+                    "#id",
+                    "*",
+                    "$element"
+                ],
+                correctIndex: 3
+            },
+            {
+                question: "在JavaScript中，数组的索引从几开始?",
+                options: [
+                    "0",
+                    "1",
+                    "-1",
+                    "视情况而定"
+                ],
+                correctIndex: 0
+            },
+            {
+                question: "以下哪个属性可以用来改变HTML元素的文本颜色?",
+                options: [
+                    "text-color",
+                    "font-color",
+                    "color",
+                    "text-style"
+                ],
+                correctIndex: 2
+            },
+            {
+                question: "在HTML中，哪个标签用于添加一个链接?",
+                options: [
+                    "<a>",
+                    "<link>",
+                    "<href>",
+                    "<url>"
+                ],
+                correctIndex: 0
+            },
+            {
+                question: "以下哪个是正确的JavaScript注释语法?",
+                options: [
+                    "// 这是注释",
+                    "# 这是注释",
+                    "<!-- 这是注释 -->",
+                    "<-- 这是注释 -->"
+                ],
+                correctIndex: 0
+            }
+        ];
+        
+        // 游戏变量
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOptionIndex = null;
+        let answered = false;
+        
+        // 初始化游戏
+        function initGame() {
+            // 重置游戏状态
+            currentQuestionIndex = 0;
+            score = 0;
+            selectedOptionIndex = null;
+            answered = false;
+            
+            // 更新分数显示
+            scoreElement.textContent = score;
+            totalQuestionsElement.textContent = questions.length;
+            
+            // 显示问题容器，隐藏结果容器
+            questionContainer.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            
+            // 显示下一题按钮，隐藏重新开始按钮
+            nextButton.classList.remove('hidden');
+            restartButton.classList.add('hidden');
+            
+            // 显示第一个问题
+            showQuestion(currentQuestionIndex);
+        }
+        
+        // 显示问题
+        function showQuestion(index) {
+            const question = questions[index];
+            
+            // 重置状态
+            selectedOptionIndex = null;
+            answered = false;
+            nextButton.disabled = true;
+            feedbackElement.textContent = '';
+            
+            // 设置问题文本
+            questionElement.textContent = `${index + 1}. ${question.question}`;
+            
+            // 清空选项并添加新选项
+            optionsElement.innerHTML = '';
+            question.options.forEach((option, i) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectOption(i));
+                optionsElement.appendChild(optionElement);
+            });
+            
+            // 更新进度条
+            updateProgress();
+        }
+        
+        // 选择选项
+        function selectOption(index) {
+            // 如果已经回答过则忽略
+            if (answered) return;
+            
+            const options = optionsElement.querySelectorAll('.option');
+            
+            // 移除之前的选择
+            options.forEach(option => option.classList.remove('selected'));
+            
+            // 标记当前选择
+            options[index].classList.add('selected');
+            selectedOptionIndex = index;
+            
+            // 启用下一题按钮
+            nextButton.disabled = false;
+        }
+        
+        // 提交答案
+        function submitAnswer() {
+            if (selectedOptionIndex === null || answered) return;
+            
+            answered = true;
+            const currentQuestion = questions[currentQuestionIndex];
+            const options = optionsElement.querySelectorAll('.option');
+            
+            // 检查答案是否正确
+            if (selectedOptionIndex === currentQuestion.correctIndex) {
+                // 正确答案
+                options[selectedOptionIndex].classList.add('correct');
+                feedbackElement.textContent = '正确!';
+                score++;
+                scoreElement.textContent = score;
+            } else {
+                // 错误答案
+                options[selectedOptionIndex].classList.add('incorrect');
+                options[currentQuestion.correctIndex].classList.add('correct');
+                feedbackElement.textContent = '错误!';
+            }
+        }
+        
+        // 下一题
+        function nextQuestion() {
+            if (!answered) {
+                // 如果还没有回答，则先提交答案
+                submitAnswer();
+                return;
+            }
+            
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < questions.length) {
+                // 显示下一题
+                showQuestion(currentQuestionIndex);
+            } else {
+                // 问题已回答完，显示结果
+                showResult();
+            }
+        }
+        
+        // 显示结果
+        function showResult() {
+            questionContainer.classList.add('hidden');
+            resultContainer.classList.remove('hidden');
+            nextButton.classList.add('hidden');
+            restartButton.classList.remove('hidden');
+            
+            finalScoreElement.textContent = score;
+            finalTotalElement.textContent = questions.length;
+            
+            const percentage = Math.round((score / questions.length) * 100);
+            percentageElement.textContent = percentage;
+        }
+        
+        // 更新进度条
+        function updateProgress() {
+            const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressElement.style.width = `${progressPercentage}%`;
+        }
+        
+        // 事件监听
+        nextButton.addEventListener('click', nextQuestion);
+        restartButton.addEventListener('click', initGame);
+        
+        // 开始游戏
+        initGame();
+    </script>
+</body>
+</html>
